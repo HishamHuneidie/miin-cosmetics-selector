@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "Mi extensión de Chrome",
+    "version": "1.0",
+    "description": "Descripción de mi extensión",
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icon.png",
+            "48": "icon.png",
+            "128": "icon.png"
+        }
+    },
+    "background": {
+        "service_worker": "src/js/background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://miin-cosmetics.com/*"
+            ],
+            "js": [
+                "src/js/match.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage",
+        "tabs"
+    ]
+}
