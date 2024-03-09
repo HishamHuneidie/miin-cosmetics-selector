@@ -1,19 +1,20 @@
 // Info:
-//     document = DOM de la web
-//     chrome = SI definido
+//     document = Web DOM
+//     chrome = Defined
 
 window.addEventListener('load', e => {
 
     addButton();
     addModal();
-    loadBigProductos();
+    loadBigProducts();
     addModalButton();
+    //changeStorageName('productos', 'product');
 });
 
 function addButton() {
 
     var addButton = document.createElement('button');
-    addButton.textContent = 'Agregar Producto';
+    addButton.textContent = 'Add Product';
     addButton.style.position = 'fixed';
     addButton.style.top = '10px';
     addButton.style.right = '10px';
@@ -45,8 +46,8 @@ function addModalButton() {
 function addModal() {
 
     let modal = document.createElement('div');
-    modal.id = 'hisham-modal-cosmetica';
-    modal.className = 'mi-modal';
+    modal.id = 'hisham-modal-cosmetic';
+    modal.className = 'my-modal';
     let windowDiv = document.createElement('div');
     windowDiv.className = 'window';
     let list = document.createElement('ul');
@@ -62,19 +63,19 @@ function addModal() {
 
 function updateProducts() {
 
-    chrome.storage.local.get('productos', function (result) {
-        let productos;
+    chrome.storage.local.get('products', function (result) {
+        let products;
         try {
-            let storage = result.productos;
-            productos = JSON.parse(storage ?? '[]');
+            let storage = result.products;
+            products = JSON.parse(storage ?? '[]');
         } catch (e) {
-            productos = [];
+            products = [];
         }
 
-        productos.push(getProductByScrap());
+        products.push(getProductByScrap());
 
-        chrome.storage.local.set({ 'productos': JSON.stringify(productos) }, function () {
-
+        chrome.storage.local.set({ 'products': JSON.stringify(products) }, function () {
+            toast("Product added");
         });
     });
 }
@@ -86,7 +87,6 @@ function getProductByScrap() {
     let title = document.querySelector('h1[class="h1"][itemprop="name"]');
     let price = document.querySelector('span[class="h5"][itemprop="price"]');
     let brand = document.querySelector('div.soy_marca');
-    let type = document.querySelector('span[class="h5"][itemprop="price"]');
 
     return {
         "img": img.dataset.imageMediumSrc,
@@ -100,15 +100,15 @@ function getProductByScrap() {
 
 function openModal() {
 
-    let modal = document.querySelector('#hisham-modal-cosmetica');
+    let modal = document.querySelector('#hisham-modal-cosmetic');
     modal.classList.toggle('show');
 }
 
 function insertCss() {
 
     let cssContent = `
-    .mi-modal ,
-    .mi-modal * {
+    .my-modal ,
+    .my-modal * {
         margin:0;
         padding:0;
         box-sizing:border-box;
@@ -116,8 +116,29 @@ function insertCss() {
         font-size:16px;
     }
 
+    .toast-message {
+        transition:.4s;
+        display: inline-block;
+        opacity: 0;
+        visibility: hidden;
+        position: fixed;
+        zIndex: 999999;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 15px;
+        padding: 10px;
+        background: rgba(0,0,0,.8);
+        color: #fff;
+        border-radius:5px;
+    }
+    .toast-message.show {
+        opacity:1 !important;
+        visibility:visible !important;
+    }
 
-    .mi-modal {
+
+    .my-modal {
         opacity:0;
         visibility:hidden;
         background:rgba(0, 0, 0, 0.7);
@@ -129,11 +150,11 @@ function insertCss() {
         height:100vh;
         display:flex;
     }
-    .mi-modal.show {
+    .my-modal.show {
         opacity:1;
         visibility:visible;
     }
-    .mi-modal .window {
+    .my-modal .window {
         width:80%;
         height:80%;
         background:#fff;
@@ -145,7 +166,7 @@ function insertCss() {
     ul.product-list-big {
         list-style:none;
     }
-    ul.product-list-big .mi-fila {
+    ul.product-list-big .my-row {
         width:100%;
         --gap: 20px;
         padding:20px;
@@ -188,7 +209,7 @@ function insertCss() {
         filter:brightness(1.1);
         mix-blend-mode:multiply;
     }
-    .producto-titulo {
+    .product-title {
         width:40%;
         height:25px;
         line-height:25px;
@@ -196,16 +217,16 @@ function insertCss() {
         text-overflow:ellipsis;
         white-space:nowrap;
     }
-    .producto-input {
+    .product-input {
         border:0;
     }
-    .producto-precio {
+    .product-price {
         line-height:25px;
         overflow:hidden;
         text-overflow:ellipsis;
         white-space:nowrap;
     }
-    .producto-brand {
+    .product-brand {
         line-height:25px;
         overflow:hidden;
         text-overflow:ellipsis;
@@ -217,40 +238,46 @@ function insertCss() {
     document.body.appendChild(styles);
 }
 
-function loadBigProductos() {
+function loadBigProducts() {
 
     let productList = document.getElementById('product-list-big');
     productList.innerHTML = '';
-    chrome.storage.local.get('productos', function (result) {
+    chrome.storage.local.get('products', function (result) {
 
-        let productos;
+        let products;
         try {
-            let storage = result.productos;
-            productos = JSON.parse(storage ?? '[]');
+            let storage = result.products;
+            products = JSON.parse(storage ?? '[]');
         } catch (e) {
-            productos = [];
+            products = [];
         }
 
-        productos.sort((a, b) => (a.reviews > b.reviews) ? -1 : 1)
-
-        let productosByType = {};
-        productos.forEach(product => {
-            if (!productosByType[product.type]) {
-                productosByType[product.type] = [];
+        products.sort((a, b) => {
+            if ( parseInt(a.reviews) > parseInt(b.reviews) ) {
+                return -1;
             }
 
-            productosByType[product.type].push(product);
+            return 1;
         });
 
-        for (let type in productosByType) {
+        let productsByType = {};
+        products.forEach(product => {
+            if (!productsByType[product.type]) {
+                productsByType[product.type] = [];
+            }
 
-            let prods = productosByType[type];
+            productsByType[product.type].push(product);
+        });
+
+        for (let type in productsByType) {
+
+            let prods = productsByType[type];
             let miniList = document.createElement('div');
-            miniList.classList.add('mi-fila');
+            miniList.classList.add('my-row');
 
             prods.forEach((product, i) => {
                 let li = document.createElement('li');
-                li.id = `producto-${i}`;
+                li.id = `product-${i}`;
                 li.className = product.type;
                 li.addEventListener('click', toggleFavourite);
 
@@ -259,9 +286,9 @@ function loadBigProductos() {
                 let pPrice = document.createElement('p');
                 let pBrand = document.createElement('p');
 
-                pTitle.className = 'producto-titulo';
-                pPrice.className = 'producto-precio';
-                pBrand.className = 'producto-brand';
+                pTitle.className = 'product-title';
+                pPrice.className = 'product-price';
+                pBrand.className = 'product-brand';
 
                 img.src = product.img;
                 pTitle.innerHTML = product.title;
@@ -284,4 +311,30 @@ function toggleFavourite(e) {
 
     let li = e.currentTarget;
     li.classList.toggle('product-favourite')
+}
+
+function changeStorageName(oldName, newName) {
+
+    chrome.storage.local.get(oldName, function (result) {
+        let localStorageData = {};
+        localStorageData[newName] = result.products;
+        chrome.storage.local.set(localStorageData, function () {
+            console.log('Local storage updated successfully');
+        });
+    });
+}
+
+function toast(message) {
+    let floatMessage = document.createElement('p');
+    floatMessage.innerHTML = message;
+    floatMessage.className = 'toast-message';
+
+    document.body.appendChild(floatMessage);
+    floatMessage.classList.add('show');
+    setTimeout(() => {
+        floatMessage.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(floatMessage);
+        }, 1000);
+    }, 3000);
 }

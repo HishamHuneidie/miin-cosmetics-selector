@@ -1,4 +1,4 @@
 
 // Info:
-//     document = NO definido
-//     chrome = SI definido
+//     document = undefined
+//     chrome = defined

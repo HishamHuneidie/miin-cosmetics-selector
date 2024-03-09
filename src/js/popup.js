@@ -1,35 +1,37 @@
 
 
 // Info:
-//     document = DOM de la extension
-//     chrome = SI definido
+//     document = Extension's DOM
+//     chrome = Defined
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    let button = document.querySelector('#boton-limpiar');
-    button.addEventListener('click', cleanProductos);
+    let button = document.querySelector('#button-clean');
+    button.addEventListener('click', cleanProducts);
 
-    loadProductos();
+    loadProducts();
 });
 
-function loadProductos() {
+function loadProducts() {
 
     let productList = document.getElementById('product-list');
     productList.innerHTML = '';
-    chrome.storage.local.get('productos', function (result) {
+    chrome.storage.local.get('products', function (result) {
 
-        let productos;
+        let products;
         try {
-            let storage = result.productos;
-            productos = JSON.parse(storage ?? '[]');
+            let storage = result.products;
+            products = JSON.parse(storage ?? '[]');
         } catch (e) {
-            productos = [];
+            products = [];
         }
 
-        productos.forEach((product, i) => {
+        products.forEach((product, i) => {
             let li = document.createElement('li');
-            li.id = `producto-${i}`;
+            li.id = `product-${i}`;
+            li.dataset.id = i;
             li.className = product.type;
+            li.addEventListener('dblclick', removeProduct);
 
             let img = document.createElement('img');
             let pTitle = document.createElement('p');
@@ -38,15 +40,15 @@ function loadProductos() {
             let pBrand = document.createElement('p');
             let inputType = document.createElement('input');
 
-            pTitle.className = 'producto-titulo';
-            pPrice.className = 'producto-precio';
-            pBrand.className = 'producto-brand';
-            inputReviews.className = 'producto-input';
+            pTitle.className = 'product-title';
+            pPrice.className = 'product-price';
+            pBrand.className = 'product-brand';
+            inputReviews.className = 'product-input';
             inputReviews.dataset.id = i;
             inputReviews.placeholder = "Reviews";
-            inputType.className = 'producto-input';
+            inputType.className = 'product-input';
             inputType.dataset.id = i;
-            inputType.placeholder = "Tipo";
+            inputType.placeholder = "Type";
 
             img.src = product.img;
             pTitle.innerHTML = product.title;
@@ -55,8 +57,12 @@ function loadProductos() {
             pBrand.innerHTML = product.brand;
             inputType.value = product.type;
 
-            inputReviews.addEventListener('change', modifyReviews);
-            inputType.addEventListener('change', modifyType);
+            inputReviews.addEventListener('change', e => {
+                modifyProduct(e, "reviews");
+            });
+            inputType.addEventListener('change', e => {
+                modifyProduct(e, "type");
+            });
 
             li.appendChild(img);
             li.appendChild(pTitle);
@@ -69,49 +75,54 @@ function loadProductos() {
     });
 }
 
-function cleanProductos() {
+function cleanProducts() {
 
-    chrome.storage.local.set({ 'productos': '[]' }, function () {
-        loadProductos();
+    chrome.storage.local.set({ 'products': '[]' }, function () {
+        loadProducts();
     });
 }
 
-function modifyReviews(e) {
+function modifyProduct(e, optionName) {
     let input = e.currentTarget;
-    let reviews = parseInt(input.value);
     let id = input.dataset.id;
 
-    chrome.storage.local.get('productos', function (result) {
-        let productos;
+    chrome.storage.local.get('products', function (result) {
+        let products;
         try {
-            let storage = result.productos;
-            productos = JSON.parse(storage ?? '[]');
+            let storage = result.products;
+            products = JSON.parse(storage ?? '[]');
         } catch (e) {
-            productos = [];
+            products = [];
         }
 
-        productos[id]['reviews'] = reviews;
+        products[id][optionName] = input.value;
 
-        chrome.storage.local.set({ 'productos': JSON.stringify(productos) }, function () { });
+        chrome.storage.local.set({ 'products': JSON.stringify(products) }, function () { });
     });
 }
 
-function modifyType(e) {
-    let input = e.currentTarget;
-    let type = input.value;
-    let id = input.dataset.id;
-
-    chrome.storage.local.get('productos', function (result) {
-        let productos;
+function removeProduct(e) {
+    
+    let li = e.currentTarget;
+    let id = li.dataset.id;
+    chrome.storage.local.get('products', function (result) {
+        let products;
         try {
-            let storage = result.productos;
-            productos = JSON.parse(storage ?? '[]');
+            let storage = result.products;
+            products = JSON.parse(storage ?? '[]');
         } catch (e) {
-            productos = [];
+            products = [];
         }
 
-        productos[id]['type'] = type;
+        let newProductList = [];
+        products.forEach( (product, i) => {
+            if ( i != id ) {
+                newProductList.push(product);
+            }
+        });
 
-        chrome.storage.local.set({ 'productos': JSON.stringify(productos) }, function () { });
+        chrome.storage.local.set({ 'products': JSON.stringify(newProductList) }, function () {
+            loadProducts();
+        });
     });
 }

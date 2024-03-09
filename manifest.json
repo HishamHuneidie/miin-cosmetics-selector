@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Mi extensión de Chrome",
+    "name": "Cosmetic selector",
     "version": "1.0",
-    "description": "Descripción de mi extensión",
+    "description": "This is a chrome extension that helps selecting products to decide the best cosmetic pack",
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
